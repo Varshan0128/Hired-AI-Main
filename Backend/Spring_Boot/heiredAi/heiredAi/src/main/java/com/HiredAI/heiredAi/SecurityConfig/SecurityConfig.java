@@ -57,6 +57,11 @@ public class SecurityConfig {
         this.allowedOrigins = allowedOrigins;
     }
 
+    /**
+     * Configures the application's security filter chain.
+     *
+     * @return the configured security filter chain
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http

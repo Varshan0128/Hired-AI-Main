@@ -26,12 +26,22 @@ import java.util.Map;
 )
 public class IntelligenceDbConfig {
 
+    /**
+     * Binds configuration for the intelligence data source.
+     *
+     * @return the configured {@link DataSourceProperties}
+     */
     @Bean
     @ConfigurationProperties("spring.datasource.intelligence")
     public DataSourceProperties intelligenceDataSourceProperties() {
         return new DataSourceProperties();
     }
 
+    /**
+     * Creates the intelligence data source.
+     *
+     * @return the configured intelligence data source
+     */
     @Bean(name = "intelligenceDataSource")
     public DataSource intelligenceDataSource() {
         return intelligenceDataSourceProperties()
@@ -39,6 +49,11 @@ public class IntelligenceDbConfig {
                 .build();
     }
 
+    /**
+     * Creates the entity manager factory for the intelligence persistence unit.
+     *
+     * @return the configured {@link LocalContainerEntityManagerFactoryBean}
+     */
     @Bean(name = "intelligenceEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean intelligenceEntityManagerFactory(
             EntityManagerFactoryBuilder builder,
@@ -58,6 +73,12 @@ public class IntelligenceDbConfig {
                 .build();
     }
 
+    /**
+     * Creates the transaction manager for the intelligence persistence unit.
+     *
+     * @param  entityManagerFactory the entity manager factory for the intelligence database
+     * @return the configured transaction manager
+     */
     @Bean(name = "intelligenceTransactionManager")
     public PlatformTransactionManager intelligenceTransactionManager(
             @Qualifier("intelligenceEntityManagerFactory") EntityManagerFactory entityManagerFactory) {

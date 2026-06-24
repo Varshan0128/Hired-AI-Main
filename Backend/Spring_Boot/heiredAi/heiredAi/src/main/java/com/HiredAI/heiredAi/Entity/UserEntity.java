@@ -121,30 +121,66 @@ public class UserEntity {
 	public void setMobile(String mobile) {
 		this.mobile = mobile;
 	}
+	/**
+	 * Creates an empty user entity.
+	 */
 	public UserEntity() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
 	
+	/**
+	 * Gets the time when this user record was created.
+	 *
+	 * @return the creation timestamp
+	 */
 	public java.time.LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
+	/**
+	 * Sets the time this user record was created.
+	 *
+	 * @param createdAt the creation time
+	 */
 	public void setCreatedAt(java.time.LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
+	/**
+	 * Gets the time of the user's most recent login.
+	 *
+	 * @return the timestamp of the last login
+	 */
 	public java.time.LocalDateTime getLastLoginAt() {
 		return lastLoginAt;
 	}
+	/**
+	 * Sets the time of the user's most recent login.
+	 *
+	 * @param lastLoginAt the timestamp of the last login
+	 */
 	public void setLastLoginAt(java.time.LocalDateTime lastLoginAt) {
 		this.lastLoginAt = lastLoginAt;
 	}
+	/**
+	 * Gets the source that was used to acquire the user.
+	 *
+	 * @return the acquisition source
+	 */
 	public String getAcquisitionSource() {
 		return acquisitionSource;
 	}
+	/**
+	 * Sets the user's acquisition source.
+	 *
+	 * @param acquisitionSource the source associated with the user
+	 */
 	public void setAcquisitionSource(String acquisitionSource) {
 		this.acquisitionSource = acquisitionSource;
 	}
 	
+	/**
+	 * Sets the creation timestamp before the entity is first persisted.
+	 */
 	@jakarta.persistence.PrePersist
 	protected void onCreate() {
 		this.createdAt = java.time.LocalDateTime.now();

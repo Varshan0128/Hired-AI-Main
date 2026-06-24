@@ -48,12 +48,25 @@ public class UserControll {
         this.authCookieSameSite = authCookieSameSite;
     }
 
+    /**
+     * Registers a new user account.
+     *
+     * @param user the registration details
+     * @return the registration result message
+     */
     @PostMapping("/register")
     public String userRegister(@RequestBody UserEntity user) {
         return userService.Register(user.getEmail(), user.getPassword(), user.getFirstName(), user.getLastName(),
                 user.getMobile(), user.getAcquisitionSource());
     }
 
+    /**
+     * Authenticates a user and sets the auth cookie on success.
+     *
+     * @param user     the login credentials
+     * @param response the HTTP response used to add the auth cookie
+     * @return the service response if login fails; otherwise a success message or an internal server error response if the token is missing
+     */
     @PostMapping("/login")
     public ResponseEntity<?> userLogin(@RequestBody UserEntity user, HttpServletResponse response) {
         ResponseEntity<?> loginResponse = userService.login(user.getEmail(), user.getPassword());

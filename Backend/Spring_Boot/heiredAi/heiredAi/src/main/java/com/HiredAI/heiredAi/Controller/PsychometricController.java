@@ -21,11 +21,24 @@ public class PsychometricController {
     private final UserPsychometricRepository userPsychometricRepository;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a controller for storing and retrieving psychometric results.
+     *
+     * @param userPsychometricRepository the repository used to access psychometric records
+     * @param objectMapper the JSON mapper used to serialize and deserialize results
+     */
     public PsychometricController(UserPsychometricRepository userPsychometricRepository, ObjectMapper objectMapper) {
         this.userPsychometricRepository = userPsychometricRepository;
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Saves psychometric results for the authenticated user.
+     *
+     * @param authentication the current authentication principal
+     * @param body the request payload containing the module name and results data
+     * @return a response indicating whether the results were saved successfully
+     */
     @PostMapping
     public ResponseEntity<?> savePsychometric(Authentication authentication, @RequestBody Map<String, Object> body) {
         if (authentication == null || !(authentication.getPrincipal() instanceof UserEntity user)) {
@@ -60,6 +73,11 @@ public class PsychometricController {
         }
     }
 
+    /**
+     * Retrieves the authenticated user's saved psychometric results grouped by module.
+     *
+     * @return a response containing a map of module names to their saved results, or an error message if the request is unauthorized or the results cannot be fetched
+     */
     @GetMapping
     public ResponseEntity<?> getPsychometric(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof UserEntity user)) {

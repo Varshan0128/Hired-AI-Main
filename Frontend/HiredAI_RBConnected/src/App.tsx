@@ -60,6 +60,11 @@ if (import.meta.env.DEV) {
   }
 }
 
+/**
+ * Resets scroll position and records page views for route changes.
+ *
+ * @returns `null`
+ */
 function RouteScrollManager() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
@@ -139,6 +144,11 @@ function JobDiscoveryUploadRoute({
   return element;
 }
 
+/**
+ * Renders the application shell and route configuration.
+ *
+ * @returns The app layout with route definitions, scroll management, and toast notifications.
+ */
 export default function App() {
   const navigate = useNavigate();
   const { isAuthenticated, status, user } = useAuth();

@@ -564,6 +564,11 @@ function Frame3({ formData, onChange, onRegister, onNavigate }: Frame3Props) {
   );
 }
 
+/**
+ * Renders the account creation page and handles registration submission.
+ *
+ * @param onNavigate - Navigates to the requested page after registration or when the user chooses to log in
+ */
 export default function SignIn({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [formData, setFormData] = useState({
     username: "",

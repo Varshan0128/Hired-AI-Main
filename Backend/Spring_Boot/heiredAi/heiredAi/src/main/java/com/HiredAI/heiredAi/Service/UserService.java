@@ -39,6 +39,11 @@ public class UserService {
 	private final JwtUtil jwtUtil;
 	private final boolean requireEmailVerification;
 
+	/**
+	 * Creates a user service with the configured dependencies.
+	 *
+	 * @param requireEmailVerification whether email verification is required before login
+	 */
 	public UserService(
 			UserRepository userRepository,
 			PasswordEncoder passwordEncoder,
@@ -52,10 +57,26 @@ public class UserService {
 		this.requireEmailVerification = requireEmailVerification;
 	}
 
+	/**
+	 * Registers a user account with no acquisition source.
+	 *
+	 * @param Email     the email address used for registration
+	 * @param pass      the password to store for the new account
+	 * @param firstName the user's first name
+	 * @param lastName  the user's last name
+	 * @param mobile    the user's mobile number
+	 * @return a registration status message
+	 */
 	public String Register(String Email, String pass, String firstName, String lastName, String mobile) {
 		return Register(Email, pass, firstName, lastName, mobile, null);
 	}
 
+	/**
+	 * Registers a new user account and starts email verification when required.
+	 *
+	 * @param  acquisitionSource the source associated with the registration
+	 * @return                  a status message indicating whether the user already exists, registration completed, or an OTP was sent
+	 */
 	public String Register(String Email, String pass, String firstName, String lastName, String mobile, String acquisitionSource) {
 
 		Optional<UserEntity> user = userRepository.findByEmail(Email);
@@ -89,6 +110,13 @@ public class UserService {
 		}
 	}
 
+	/**
+	 * Authenticates a user and issues a JWT.
+	 *
+	 * @param email the user's email address
+	 * @param pass  the user's password
+	 * @return a response with an authentication message and token on success, or an unauthorized response when the account is missing, unverified, or the password is invalid
+	 */
 	public ResponseEntity<?> login(String email, String pass) {
 
 		Optional<UserEntity> user = userRepository.findByEmail(email);

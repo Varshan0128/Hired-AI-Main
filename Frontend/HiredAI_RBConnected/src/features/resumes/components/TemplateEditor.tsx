@@ -86,6 +86,15 @@ interface TemplateEditorProps {
   onBack?: () => void;
 }
 
+/**
+ * Edits a resume template, previews the generated document, and continues to the next step.
+ *
+ * @param selectedRole - The target role associated with the resume.
+ * @param formData - The current template editor values.
+ * @param setFormData - Updates the template editor values.
+ * @param onContinue - Called after the resume is saved or save fails.
+ * @param onBack - Navigates to the previous step.
+ */
 export function TemplateEditor({
   selectedTemplate,
   selectedRole,

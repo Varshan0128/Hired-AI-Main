@@ -226,6 +226,21 @@ const ProgressRow = ({ label, value, tone = "#2563eb" }: { label: string; value:
   </div>
 );
 
+/**
+ * Renders the ATS analysis results experience for a resume and target job.
+ *
+ * Boots backend services, loads job details when a job is selected, automatically scores the resume text when it is available, and runs grammar analysis after scoring. Also supports keyword insertion, score re-analysis, download actions, and navigation callbacks.
+ *
+ * @param jobId - The selected job identifier.
+ * @param jobTitle - The target role name used when no job record is loaded.
+ * @param resumeText - The resume content to analyze.
+ * @param onBack - Called when the user navigates back.
+ * @param onGoToDashboard - Called when the user chooses to leave for the dashboard.
+ * @param onKeywordClick - Called when a suggested skill is opened for editing.
+ * @param onDownload - Called when the user downloads the resume.
+ * @param showDownloadButton - Controls whether the download action is shown.
+ * @param onScoreChange - Called after a successful ATS score calculation.
+ */
 function ATSAnalysisCore({
   jobId,
   jobTitle,

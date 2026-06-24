@@ -676,6 +676,11 @@ function runRoleRadarAnalysis(): AnalysisResult {
   };
 }
 
+/**
+ * Renders the resume processing screen and displays analysis results after the timed flow completes.
+ *
+ * @returns The resume processing UI.
+ */
 export default function ResumeProcessing() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);

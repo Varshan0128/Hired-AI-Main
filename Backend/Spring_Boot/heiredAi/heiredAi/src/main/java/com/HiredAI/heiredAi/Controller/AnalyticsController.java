@@ -17,11 +17,20 @@ public class AnalyticsController {
     private final AnalyticsEventRepository analyticsEventRepository;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a controller for ingesting analytics events.
+     */
     public AnalyticsController(AnalyticsEventRepository analyticsEventRepository, ObjectMapper objectMapper) {
         this.analyticsEventRepository = analyticsEventRepository;
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Ingests an analytics event from the request body and stores it.
+     *
+     * @param body the request payload containing event fields
+     * @return a response with a success status body
+     */
     @PostMapping("/events")
     public ResponseEntity<?> ingestEvent(@RequestBody Map<String, Object> body) {
         try {

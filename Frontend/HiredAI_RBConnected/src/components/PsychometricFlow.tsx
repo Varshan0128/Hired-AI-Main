@@ -118,6 +118,13 @@ function readStoredProfile() {
   }
 }
 
+/**
+ * Persists completed psychometric results and starts a backend sync.
+ *
+ * @param module - The psychometric module being completed.
+ * @param result - The final assessment result to store.
+ * @param history - The answered question history to save.
+ */
 function persistEngineState(
   module: PsychometricModule,
   result: PsychometricEngineResult,
@@ -170,6 +177,11 @@ function persistEngineState(
   }
 }
 
+/**
+ * Runs the psychometric assessment flow for a module and displays the computed result.
+ *
+ * @param module - The assessment module to load and complete
+ */
 export default function PsychometricFlow({ module }: PsychometricFlowProps) {
   const navigate = useNavigate();
   const startTimeRef = useRef(Date.now());

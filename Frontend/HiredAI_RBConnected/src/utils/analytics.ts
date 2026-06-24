@@ -1,5 +1,10 @@
 const API_BASE = (import.meta.env.VITE_HEIREDAI_API_URL || "http://localhost:8080").replace(/\/$/, "");
 
+/**
+ * Generates a UUID-like identifier.
+ *
+ * @returns A pseudo-random UUID v4-style string.
+ */
 function generateUUID(): string {
   // Simple UUID v4 generator in vanilla JS/TS
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -9,6 +14,11 @@ function generateUUID(): string {
   });
 }
 
+/**
+ * Gets the persistent anonymous analytics identifier for the browser.
+ *
+ * @returns The stored anonymous ID, or a newly generated ID if none exists.
+ */
 function getAnonymousId(): string {
   let anonymousId = localStorage.getItem("hiredai_analytics_anonymous_id");
   if (!anonymousId) {
@@ -18,6 +28,11 @@ function getAnonymousId(): string {
   return anonymousId;
 }
 
+/**
+ * Retrieves the current analytics session identifier.
+ *
+ * @returns The stored session ID, or a newly generated one after it is saved.
+ */
 function getSessionId(): string {
   let sessionId = sessionStorage.getItem("hiredai_analytics_session_id");
   if (!sessionId) {
@@ -40,10 +55,23 @@ if (typeof window !== "undefined") {
   }
 }
 
+/**
+ * Gets the cached device type.
+ *
+ * @returns The precomputed device type.
+ */
 function getDeviceType(): string {
   return cachedDeviceType;
 }
 
+/**
+ * Tracks an analytics event and sends it to the analytics API.
+ *
+ * For `signup_succeeded`, it also derives `email_domain` and `acquisition_source` from the current page, form field, or URL query parameters when available.
+ *
+ * @param eventName - The analytics event name.
+ * @param props - Additional event properties.
+ */
 export function track(eventName: string, props: Record<string, any> = {}) {
   try {
     const eventId = generateUUID();

@@ -14,6 +14,10 @@ function isSupportedFile(file) {
   return acceptedExtensions.some((extension) => lowerName.endsWith(extension));
 }
 
+/**
+ * Renders the resume upload screen.
+ * @returns {JSX.Element} The resume upload page.
+ */
 export default function ResumeUpload() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);

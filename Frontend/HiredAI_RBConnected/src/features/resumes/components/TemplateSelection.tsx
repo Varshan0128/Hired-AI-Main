@@ -46,6 +46,15 @@ const templates = [
 ];
 
 
+/**
+ * Lets the user browse resume templates, preview them with their data, and continue with a chosen template.
+ *
+ * @param selectedRole - Job role used to fill missing template placeholders.
+ * @param selectedTemplate - Template id to mark as initially selected.
+ * @param formData - Resume editor content to merge into template previews.
+ * @param onContinue - Called when the user proceeds with a template.
+ * @param onBack - Called when the user navigates back to the previous step.
+ */
 export function TemplateSelection({
   selectedRole,
   selectedTemplate,

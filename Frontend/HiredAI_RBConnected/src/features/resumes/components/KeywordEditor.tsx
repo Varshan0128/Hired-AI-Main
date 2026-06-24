@@ -11,6 +11,15 @@ interface KeywordEditorProps {
   onBack?: () => void;
 }
 
+/**
+ * Renders the keyword editor page for reviewing a resume preview and selected keywords.
+ *
+ * @param selectedRole - The role shown in the page subtitle.
+ * @param selectedKeywords - The keywords displayed in the selected keywords section.
+ * @param onSaveChanges - Called after the save action is completed.
+ * @param onBack - Called when a back action is triggered.
+ * @returns The keyword editor UI.
+ */
 export function KeywordEditor({ selectedRole, selectedKeywords, onSaveChanges, onBack }: KeywordEditorProps) {
   const startTimeRef = useRef(Date.now());
 

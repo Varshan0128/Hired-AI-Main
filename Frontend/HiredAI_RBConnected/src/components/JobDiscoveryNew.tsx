@@ -142,6 +142,11 @@ function readStoredJobData(): StoredJobData | unknown[] | null {
   }
 }
 
+/**
+ * Displays the job discovery page with search, filters, saved jobs, and job details.
+ *
+ * @param onNavigate - Handles navigation actions from the page.
+ */
 export default function JobDiscoveryNew({ onNavigate }: JobDiscoveryNewProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
