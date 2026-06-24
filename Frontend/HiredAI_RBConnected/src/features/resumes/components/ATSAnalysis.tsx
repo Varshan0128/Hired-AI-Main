@@ -319,6 +319,7 @@ function ATSAnalysisCore({
     setAnalysisAttempted(false);
     setResult(null);
     setGrammarResult(null);
+    startTimeRef.current = Date.now();
   }, [jobId, resumeText, jobTitle]);
 
   useEffect(() => {

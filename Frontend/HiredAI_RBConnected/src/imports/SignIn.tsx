@@ -586,12 +586,16 @@ export default function SignIn({ onNavigate }: { onNavigate: (page: string) => v
 
     try {
       // Mapping Username to firstName for now, assuming backend structure
+      const urlParams = new URLSearchParams(window.location.search);
+      const acquisitionSource = urlParams.get("utm_source") || "direct";
+
       const payload = {
         firstName: username,
         lastName: "", // Optional or split username
         email: email,
         mobile: phone,
         password: password,
+        acquisitionSource: acquisitionSource,
       };
 
       const response = await fetch(`${HEIREDAI_API_BASE}/api/user/register`, {

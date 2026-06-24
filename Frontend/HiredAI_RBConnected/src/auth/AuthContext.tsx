@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      (window as any).hiredai_user_id = user ? (user.id?.toString() || user.email) : null;
+      (window as any).hiredai_user_id = user?.id ? user.id.toString() : null;
     }
   }, [user]);
 

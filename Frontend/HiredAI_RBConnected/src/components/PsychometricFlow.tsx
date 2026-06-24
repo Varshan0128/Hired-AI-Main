@@ -118,58 +118,6 @@ function readStoredProfile() {
   }
 }
 
-function persistEngineState(
-  module: PsychometricModule,
-  result: PsychometricEngineResult,
-  history: AnswerHistoryItem[],
-) {
-  localStorage.setItem(getCompletionKey(module), "true");
-  localStorage.setItem(
-    getAnswersKey(module),
-    JSON.stringify(
-      history.map((entry) => ({
-        questionId: entry.question.id,
-        answerIndex: entry.optionIndex,
-        answer: entry.optionValue,
-      })),
-    ),
-  );
-
-  const currentProfile = readStoredProfile() as Record<string, unknown>;
-  const mergedProfile = {
-    ...currentProfile,
-    module,
-    topTraits: result.topTraits,
-    confidence: result.confidence,
-    best: result.best,
-    second: result.second,
-    traitScores: result.traitScores,
-    [module]: result,
-  };
-
-  localStorage.setItem("psychometric_profile", JSON.stringify(mergedProfile));
-
-  // Sync with backend database in the background (fails silently)
-  try {
-    const API_BASE = (import.meta.env.VITE_HEIREDAI_API_URL || "http://localhost:8080").replace(/\/$/, "");
-    fetch(`${API_BASE}/api/user/psychometric`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        module,
-        results: result,
-      }),
-      credentials: "include",
-    }).catch((err) => {
-      console.warn("Psychometric backend sync failed (silent):", err);
-    });
-  } catch (err) {
-    console.warn("Psychometric backend sync error (silent):", err);
-  }
-}
-
 export default function PsychometricFlow({ module }: PsychometricFlowProps) {
   const navigate = useNavigate();
   const startTimeRef = useRef(Date.now());
@@ -180,6 +128,77 @@ export default function PsychometricFlow({ module }: PsychometricFlowProps) {
   const [answerHistory, setAnswerHistory] = useState<AnswerHistoryItem[]>([]);
   const [selectedValue, setSelectedValue] = useState("");
   const [resultSummary, setResultSummary] = useState<ResultSummary | null>(null);
+  const [savingStatus, setSavingStatus] = useState<"idle" | "saving" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ result: PsychometricEngineResult; history: AnswerHistoryItem[] } | null>(null);
+
+  const performSave = async (result: PsychometricEngineResult, history: AnswerHistoryItem[]) => {
+    setSavingStatus("saving");
+    setErrorMessage(null);
+    try {
+      const API_BASE = (import.meta.env.VITE_HEIREDAI_API_URL || "http://localhost:8080").replace(/\/$/, "");
+      const response = await fetch(`${API_BASE}/api/user/psychometric`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          module,
+          results: result,
+        }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save results. Server returned status: ${response.status}`);
+      }
+
+      // Only complete and persist locally after a successful server write
+      localStorage.setItem(getCompletionKey(module), "true");
+      localStorage.setItem(
+        getAnswersKey(module),
+        JSON.stringify(
+          history.map((entry) => ({
+            questionId: entry.question.id,
+            answerIndex: entry.optionIndex,
+            answer: entry.optionValue,
+          })),
+        ),
+      );
+
+      const currentProfile = readStoredProfile() as Record<string, unknown>;
+      const mergedProfile = {
+        ...currentProfile,
+        module,
+        topTraits: result.topTraits,
+        confidence: result.confidence,
+        best: result.best,
+        second: result.second,
+        traitScores: result.traitScores,
+        [module]: result,
+      };
+      localStorage.setItem("psychometric_profile", JSON.stringify(mergedProfile));
+
+      // Track completion
+      try {
+        const time_spent_seconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+        track("psychometric_completed", {
+          module,
+          question_count: history.length,
+          time_spent_seconds,
+        });
+      } catch (analyticsError) {
+        console.warn("Analytics error for psychometric_completed:", analyticsError);
+      }
+
+      setResultSummary(buildResultSummary(module, result));
+      setSavingStatus("idle");
+    } catch (err: any) {
+      console.error("Psychometric backend sync failed:", err);
+      setSavingStatus("error");
+      setErrorMessage(err.message || "An unexpected error occurred while saving results.");
+    }
+  };
 
   useEffect(() => {
     const completed = localStorage.getItem(getCompletionKey(module));
@@ -261,20 +280,8 @@ export default function PsychometricFlow({ module }: PsychometricFlowProps) {
         return;
       }
 
-      persistEngineState(module, result, nextHistory);
-
-      try {
-        const time_spent_seconds = Math.round((Date.now() - startTimeRef.current) / 1000);
-        track("psychometric_completed", {
-          module,
-          question_count: nextHistory.length,
-          time_spent_seconds,
-        });
-      } catch (analyticsError) {
-        console.warn("Analytics error for psychometric_completed:", analyticsError);
-      }
-
-      setResultSummary(buildResultSummary(module, result));
+      setPendingSave({ result, history: nextHistory });
+      void performSave(result, nextHistory);
       setCurrentQuestion(null);
       return;
     }
@@ -294,6 +301,64 @@ export default function PsychometricFlow({ module }: PsychometricFlowProps) {
             <p className="font-['Poppins:Medium',sans-serif] text-neutral-700">
               Preparing assessment...
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (savingStatus === "saving") {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="fixed left-4 top-4 z-50">
+          <PageBackButton fallbackTo="/dashboard" label="Dashboard" variant="floating" />
+        </div>
+        <div className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-2xl rounded-[24px] border-2 border-neutral-800 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.08)] text-center flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-800"></div>
+            <p className="font-['Poppins:Medium',sans-serif] text-neutral-700">
+              Saving assessment results...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (savingStatus === "error") {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="fixed left-4 top-4 z-50">
+          <PageBackButton fallbackTo="/dashboard" label="Dashboard" variant="floating" />
+        </div>
+        <div className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-2xl rounded-[24px] border-2 border-neutral-800 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.08)] text-center">
+            <h2 className="font-['Poppins:Bold',sans-serif] text-2xl text-red-600 mb-4">
+              Failed to Save Results
+            </h2>
+            <p className="font-['Poppins:Regular',sans-serif] text-neutral-600 mb-6 leading-7">
+              {errorMessage || "We encountered an issue saving your psychometric assessment results to the server."}
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                className="rounded-lg border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (pendingSave) {
+                    void performSave(pendingSave.result, pendingSave.history);
+                  }
+                }}
+                className="rounded-lg bg-black px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                Retry Save
+              </button>
+            </div>
           </div>
         </div>
       </div>

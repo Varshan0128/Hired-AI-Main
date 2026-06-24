@@ -6,6 +6,8 @@ import com.HiredAI.heiredAi.IntelligenceRepository.UserPsychometricRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,8 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/user/psychometric")
 public class PsychometricController {
+
+    private static final Logger logger = LoggerFactory.getLogger(PsychometricController.class);
 
     private final UserPsychometricRepository userPsychometricRepository;
     private final ObjectMapper objectMapper;
@@ -55,8 +59,9 @@ public class PsychometricController {
             userPsychometricRepository.save(psychometric);
             return ResponseEntity.ok(Map.of("Message", "Psychometric results saved successfully"));
         } catch (Exception e) {
+            logger.error("Failed to save psychometric results", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("Message", "Failed to save results: " + e.getMessage()));
+                    .body(Map.of("Message", "Failed to save results: An unexpected error occurred."));
         }
     }
 
@@ -75,8 +80,9 @@ public class PsychometricController {
             }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("Failed to fetch psychometric results", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("Message", "Failed to fetch results: " + e.getMessage()));
+                    .body(Map.of("Message", "Failed to fetch results: An unexpected error occurred."));
         }
     }
 }

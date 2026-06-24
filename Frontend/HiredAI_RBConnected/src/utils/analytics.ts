@@ -89,6 +89,9 @@ export function track(eventName: string, props: Record<string, any> = {}) {
       const urlParams = new URLSearchParams(window.location.search);
       const acquisition_source = urlParams.get("utm_source") || "direct";
 
+      // Remove raw email to prevent leaking PII to analytics
+      delete propertiesObj.email;
+
       propertiesObj = {
         ...propertiesObj,
         email_domain,
@@ -132,5 +135,17 @@ export function track(eventName: string, props: Record<string, any> = {}) {
 
 // Expose track globally so components can access it without importing
 if (typeof window !== "undefined") {
+  const queue = (window as any).hiredai_analytics_queue || [];
   (window as any).hiredai_track = track;
+  // Flush queue
+  while (queue.length > 0) {
+    const event = queue.shift();
+    if (event) {
+      try {
+        track(event.eventName, event.props);
+      } catch (err) {
+        console.warn("Analytics queue flush error:", err);
+      }
+    }
+  }
 }

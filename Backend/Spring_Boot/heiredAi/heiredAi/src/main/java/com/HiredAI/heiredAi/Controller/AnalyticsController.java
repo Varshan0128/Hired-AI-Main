@@ -2,8 +2,10 @@ package com.HiredAI.heiredAi.Controller;
 
 import com.HiredAI.heiredAi.IntelligenceEntity.AnalyticsEvent;
 import com.HiredAI.heiredAi.IntelligenceRepository.AnalyticsEventRepository;
+import com.HiredAI.heiredAi.Entity.UserEntity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -23,7 +25,7 @@ public class AnalyticsController {
     }
 
     @PostMapping("/events")
-    public ResponseEntity<?> ingestEvent(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> ingestEvent(@RequestBody Map<String, Object> body, Authentication authentication) {
         try {
             AnalyticsEvent event = new AnalyticsEvent();
             
@@ -41,7 +43,11 @@ public class AnalyticsController {
                 event.setOccurredAt(OffsetDateTime.now());
             }
 
-            event.setUserId((String) body.get("user_id"));
+            if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof UserEntity user) {
+                event.setUserId(user.getId() != null ? String.valueOf(user.getId()) : null);
+            } else {
+                event.setUserId(null);
+            }
             event.setAnonymousId((String) body.get("anonymous_id"));
             event.setSessionId((String) body.get("session_id"));
             event.setEventName((String) body.get("event_name"));

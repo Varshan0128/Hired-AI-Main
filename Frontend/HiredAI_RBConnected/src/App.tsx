@@ -146,7 +146,7 @@ export default function App() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const userId = user.id?.toString() || user.email || "";
+      const userId = user.id?.toString() || "";
       if (userId && lastIdentifiedUserRef.current !== userId) {
         lastIdentifiedUserRef.current = userId;
         const anonymousId = localStorage.getItem("hiredai_analytics_anonymous_id") || "";
