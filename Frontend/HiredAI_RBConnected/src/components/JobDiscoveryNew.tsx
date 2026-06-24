@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Checkbox } from './ui/checkbox';
 import { Slider } from './ui/slider';
 import PageBackButton from './PageBackButton';
+import { track } from '../utils/analytics';
 
 import { Page } from "../App";
 
@@ -195,6 +196,23 @@ export default function JobDiscoveryNew({ onNavigate }: JobDiscoveryNewProps) {
     toast.success(`Application opened for ${job.title}!`, {
       description: 'Good luck with your application!',
     });
+
+    try {
+      let ats_score_at_time_of_apply = null;
+      const rawAnalysis = localStorage.getItem("resumeAnalysis");
+      if (rawAnalysis) {
+        const parsed = JSON.parse(rawAnalysis);
+        ats_score_at_time_of_apply = parsed.overall_score ?? parsed.score ?? null;
+      }
+      track("job_application_submitted", {
+        job_id: job.id || null,
+        job_title: job.title || null,
+        ats_score_at_time_of_apply,
+        from_listing: false,
+      });
+    } catch (e) {
+      console.warn("Analytics error for job_application_submitted:", e);
+    }
   };
 
   const filteredJobs = useMemo(() => (

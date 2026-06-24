@@ -722,7 +722,36 @@ export default function ResumeProcessing() {
       return;
     }
 
-    setAnalysis(runRoleRadarAnalysis());
+    const result = runRoleRadarAnalysis();
+    setAnalysis(result);
+
+    try {
+      if (typeof window !== "undefined" && (window as any).hiredai_track) {
+        const ats_score = result.careerScore?.score ?? 0;
+        const gap_count = result.parsed?.gapAreas?.length ?? 0;
+        const matched_skill_count = result.parsed?.topSkills?.length ?? 0;
+        
+        let resume_id = "local-resume";
+        try {
+          const raw = localStorage.getItem("resumeAnalysis");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            resume_id = parsed.resume_id || parsed.id || "local-resume";
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        (window as any).hiredai_track("ats_analysis_completed", {
+          ats_score,
+          gap_count,
+          matched_skill_count,
+          resume_id
+        });
+      }
+    } catch (err) {
+      console.warn("Analytics error during ATS completion:", err);
+    }
   }, [analysis, isComplete]);
 
   const topMatches = analysis?.jobs.slice(0, 2) ?? [];

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageBackButton from "../../../components/PageBackButton";
+import { track } from "../../../utils/analytics";
 
 const ATS_BASE_URL = (import.meta.env.VITE_ATS_API_URL || "http://localhost:5000").replace(/\/$/, "");
 const GRAMMAR_BASE_URL = (import.meta.env.VITE_PYTHON_API_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -237,6 +238,7 @@ function ATSAnalysisCore({
   score,
   onScoreChange,
 }: AnalysisProps) {
+  const startTimeRef = useRef(Date.now());
   const [loading, setLoading] = useState(true);
   const [scoring, setScoring] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "ok" | "error" } | null>(null);
@@ -317,6 +319,7 @@ function ATSAnalysisCore({
     setAnalysisAttempted(false);
     setResult(null);
     setGrammarResult(null);
+    startTimeRef.current = Date.now();
   }, [jobId, resumeText, jobTitle]);
 
   useEffect(() => {
@@ -362,6 +365,7 @@ function ATSAnalysisCore({
   }, [notify, resolveGrammarText]);
 
   const handleScore = useCallback(async () => {
+    const is_re_analysis = result !== null;
     const { effectiveText, source } = resolveEffectiveResumeText();
     if (!effectiveText || effectiveText.length < 50) {
       return notify("Resume text is empty or too short. Please enter at least 50 characters in the editor.", "error");
@@ -385,6 +389,18 @@ function ATSAnalysisCore({
         : await API.scoreText(effectiveText, { jobDescription: jobTitle });
       const normalized = normalizeResult(raw, jobTitle, selectedJob);
       setResult(normalized);
+      try {
+        track("ats_score_calculated", {
+          ats_score: normalized.score ?? null,
+          matched_skill_count: normalized.matchedSkills?.length ?? 0,
+          gap_count: normalized.skillGaps?.length ?? 0,
+          resume_id: normalized.analysisId || null,
+          target_role: jobTitle || null,
+          is_re_analysis
+        });
+      } catch (analyticsError) {
+        console.warn("Analytics error for ats_score_calculated:", analyticsError);
+      }
       onScoreChange?.(normalized.score);
       await handleGrammar(effectiveText, { silent: true });
       notify("Analysis complete");
@@ -393,7 +409,7 @@ function ATSAnalysisCore({
     } finally {
       setScoring(false);
     }
-  }, [selectedJobId, selectedJob, jobTitle, notify, onScoreChange, resolveEffectiveResumeText, handleGrammar]);
+  }, [selectedJobId, selectedJob, jobTitle, notify, onScoreChange, resolveEffectiveResumeText, handleGrammar, result]);
 
   const hasAnalyzableResume = Boolean((resumeText || "").trim()) && (resumeText || "").trim().length >= 50;
   const showPendingAnalysis = hasAnalyzableResume && (!analysisAttempted || scoring) && !result;
@@ -410,7 +426,34 @@ function ATSAnalysisCore({
     if (addedKeywords.includes(kw)) return;
     setAddedKeywords((p) => [...p, kw]);
     if (options?.openEditor) {
+      if (onKeywordClick) {
+        const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+        try {
+          track("resume_builder_step_completed", {
+            step: "ats_analysis",
+            time_spent_seconds: elapsed,
+            template_chosen: null,
+          });
+        } catch (e) {
+          console.warn("Analytics error for ats_analysis step completed:", e);
+        }
+      }
       onKeywordClick?.(kw);
+    }
+  };
+
+  const handleDownload = () => {
+    if (onDownload) {
+      onDownload();
+      try {
+        track("resume_downloaded", {
+          resume_id: result?.analysisId || null,
+          template: null,
+          ats_score_at_download: result?.score ?? score ?? null,
+        });
+      } catch (err) {
+        console.warn("Analytics error for resume_downloaded:", err);
+      }
     }
   };
 
@@ -647,7 +690,7 @@ function ATSAnalysisCore({
 
           <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
             <button onClick={onBack}>Back</button>
-            {showDownloadButton ? <button onClick={onDownload} disabled={!onDownload}>Download PDF</button> : null}
+            {showDownloadButton ? <button onClick={handleDownload} disabled={!onDownload}>Download PDF</button> : null}
             {onGoToDashboard ? <button onClick={onGoToDashboard}>Go to Dashboard</button> : null}
           </div>
       </>

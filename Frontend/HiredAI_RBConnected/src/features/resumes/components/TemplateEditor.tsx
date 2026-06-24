@@ -1,4 +1,5 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState, useRef, type Dispatch, type SetStateAction } from "react";
+import { track } from "../../../utils/analytics";
 import FormSidebar from "./FormSidebar";
 import svgPaths from "../imports/svg-s6vekn30pj";
 import minimal from "../Resumes/minimal.html?raw";
@@ -93,6 +94,7 @@ export function TemplateEditor({
   onContinue,
   onBack,
 }: TemplateEditorProps) {
+  const startTimeRef = useRef(Date.now());
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -144,6 +146,20 @@ export function TemplateEditor({
       .map(([key, value]) => `${key}: ${value.trim()}`)
       .join("\n");
 
+  const handleContinueStep = (payload: { resumeId?: number; resumeText: string }) => {
+    const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+    try {
+      track("resume_builder_step_completed", {
+        step: "template_editor",
+        time_spent_seconds: elapsed,
+        template_chosen: selectedTemplate || null,
+      });
+    } catch (e) {
+      console.warn("Analytics error for editor step completion:", e);
+    }
+    onContinue?.(payload);
+  };
+
   const handleContinue = async () => {
     const effectiveEmail = (formData.EMAIL || user?.email || "user@example.com").trim();
     const effectiveFormData = sanitizeTemplateEditorFormData({
@@ -194,14 +210,14 @@ export function TemplateEditor({
       const savedResume = await response.json().catch(() => null);
       const resumeId = Number(savedResume?.ID ?? savedResume?.id);
 
-      onContinue?.({
+      handleContinueStep({
         resumeId: Number.isFinite(resumeId) ? resumeId : undefined,
         resumeText: buildResumeText(),
       });
     } catch (error) {
       console.error("Failed to save resume before analysis:", error);
       alert("Could not save resume to backend. Continuing to analysis without PDF download ID.");
-      onContinue?.({ resumeText: buildResumeText() });
+      handleContinueStep({ resumeText: buildResumeText() });
     } finally {
       setIsSaving(false);
     }

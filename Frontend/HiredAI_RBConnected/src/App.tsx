@@ -62,10 +62,34 @@ if (import.meta.env.DEV) {
 
 function RouteScrollManager() {
   const { pathname } = useLocation();
+  const { isAuthenticated } = useAuth();
+  
+  const lastTrackedPathRef = useRef<string | null>(null);
+  const lastTrackedTimeRef = useRef<number>(0);
 
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [pathname]);
+
+  useEffect(() => {
+    const now = Date.now();
+    if (
+      lastTrackedPathRef.current === pathname &&
+      now - lastTrackedTimeRef.current < 1000
+    ) {
+      return;
+    }
+
+    lastTrackedPathRef.current = pathname;
+    lastTrackedTimeRef.current = now;
+
+    if (typeof window !== "undefined" && (window as any).hiredai_track) {
+      (window as any).hiredai_track("page_viewed", {
+        referrer: document.referrer,
+        auth_state: isAuthenticated ? "authenticated" : "anonymous",
+      });
+    }
+  }, [pathname, isAuthenticated]);
 
   return null;
 }
@@ -117,7 +141,26 @@ function JobDiscoveryUploadRoute({
 
 export default function App() {
   const navigate = useNavigate();
-  const { isAuthenticated, status } = useAuth();
+  const { isAuthenticated, status, user } = useAuth();
+  const lastIdentifiedUserRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const userId = user.id?.toString() || "";
+      if (userId && lastIdentifiedUserRef.current !== userId) {
+        lastIdentifiedUserRef.current = userId;
+        const anonymousId = localStorage.getItem("hiredai_analytics_anonymous_id") || "";
+        if (typeof window !== "undefined" && (window as any).hiredai_track) {
+          (window as any).hiredai_track("user_identified", {
+            anonymous_id: anonymousId,
+            user_id: userId,
+          });
+        }
+      }
+    } else if (!isAuthenticated) {
+      lastIdentifiedUserRef.current = null;
+    }
+  }, [isAuthenticated, user]);
 
   const navigateWithLog = (route: string) => {
     console.log("Navigating to:", route);

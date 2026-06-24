@@ -78,7 +78,8 @@ public class SecurityConfig {
                                 "/api/user/reset-password",
                                 "/api/user/send-otp",
                                 "/api/user/verify-otp",
-                                "/api/user/dreamJob")
+                                "/api/user/dreamJob",
+                                "/api/analytics/events")
                         .permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth

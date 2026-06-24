@@ -586,12 +586,16 @@ export default function SignIn({ onNavigate }: { onNavigate: (page: string) => v
 
     try {
       // Mapping Username to firstName for now, assuming backend structure
+      const urlParams = new URLSearchParams(window.location.search);
+      const acquisitionSource = urlParams.get("utm_source") || "direct";
+
       const payload = {
         firstName: username,
         lastName: "", // Optional or split username
         email: email,
         mobile: phone,
         password: password,
+        acquisitionSource: acquisitionSource,
       };
 
       const response = await fetch(`${HEIREDAI_API_BASE}/api/user/register`, {
@@ -605,6 +609,14 @@ export default function SignIn({ onNavigate }: { onNavigate: (page: string) => v
       if (response.ok) {
         const message = data || "Registration successful.";
         alert(message);
+
+        try {
+          if (typeof window !== "undefined" && (window as any).hiredai_track) {
+            (window as any).hiredai_track("signup_succeeded");
+          }
+        } catch (err) {
+          console.warn("Analytics error during signup:", err);
+        }
 
         if (message.toLowerCase().includes("log in now")) {
           onNavigate("login");

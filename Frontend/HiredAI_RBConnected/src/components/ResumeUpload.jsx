@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageBackButton from "./PageBackButton";
 import { processJobs } from "../utils/autoApply";
+import { track } from "../utils/analytics";
 
 const acceptedExtensions = [".pdf", ".docx"];
 const PYTHON_BASE_URL = (
@@ -64,6 +65,18 @@ export default function ResumeUpload() {
         console.error("AUTO APPLY PROCESSING ERROR:", processingError);
         setAutoApplyStatus("Auto Apply Failed");
         localStorage.setItem("autoApplyStatus", "Auto Apply Failed");
+      }
+
+      try {
+        const file_type = file.name.split('.').pop() || null;
+        const file_size_kb = file.size ? Math.round(file.size / 1024) : null;
+        track("resume_uploaded", {
+          file_type,
+          file_size_kb,
+          upload_success: true,
+        });
+      } catch (analyticsError) {
+        console.warn("Analytics error for resume_uploaded:", analyticsError);
       }
 
       console.log("Stored Data:", localStorage.getItem("jobData"));

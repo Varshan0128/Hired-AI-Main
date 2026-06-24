@@ -45,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refreshAuth();
   }, [refreshAuth]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).hiredai_user_id = user?.id ? user.id.toString() : null;
+    }
+  }, [user]);
+
   const logout = useCallback(async () => {
     try {
       await logoutRequest();
