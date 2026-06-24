@@ -53,6 +53,10 @@ public class UserService {
 	}
 
 	public String Register(String Email, String pass, String firstName, String lastName, String mobile) {
+		return Register(Email, pass, firstName, lastName, mobile, null);
+	}
+
+	public String Register(String Email, String pass, String firstName, String lastName, String mobile, String acquisitionSource) {
 
 		Optional<UserEntity> user = userRepository.findByEmail(Email);
 		if (user.isPresent()) {
@@ -68,6 +72,7 @@ public class UserService {
 		newUser.setLastName(lastName);
 		newUser.setMobile(mobile);
 		newUser.setUserName(firstName + " " + lastName);
+		newUser.setAcquisitionSource(acquisitionSource);
 
 		newUser.setVerified(!requireEmailVerification);
 
@@ -101,6 +106,14 @@ public class UserService {
 
 		if (!verifyAndNormalizePassword(existingUser, pass))
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("Message", "Invalid password"));
+
+		try {
+			existingUser.setLastLoginAt(java.time.LocalDateTime.now());
+			userRepository.save(existingUser);
+		} catch (Exception ex) {
+			// Fail silently, login flow must work identically even if the timestamp update fails
+			System.err.println("Failed to update last login timestamp: " + ex.getMessage());
+		}
 
 		String token = jwtUtil.generateToken(existingUser);
 

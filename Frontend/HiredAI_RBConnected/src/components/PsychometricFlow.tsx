@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { track } from "../utils/analytics";
 import PageBackButton from "./PageBackButton";
 import {
   getAnswersKey,
@@ -147,10 +148,31 @@ function persistEngineState(
   };
 
   localStorage.setItem("psychometric_profile", JSON.stringify(mergedProfile));
+
+  // Sync with backend database in the background (fails silently)
+  try {
+    const API_BASE = (import.meta.env.VITE_HEIREDAI_API_URL || "http://localhost:8080").replace(/\/$/, "");
+    fetch(`${API_BASE}/api/user/psychometric`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        module,
+        results: result,
+      }),
+      credentials: "include",
+    }).catch((err) => {
+      console.warn("Psychometric backend sync failed (silent):", err);
+    });
+  } catch (err) {
+    console.warn("Psychometric backend sync error (silent):", err);
+  }
 }
 
 export default function PsychometricFlow({ module }: PsychometricFlowProps) {
   const navigate = useNavigate();
+  const startTimeRef = useRef(Date.now());
   const featureRoute = getFeatureRoute(module);
   const forceShow = import.meta.env.DEV;
   const [isReady, setIsReady] = useState(false);
@@ -240,6 +262,18 @@ export default function PsychometricFlow({ module }: PsychometricFlowProps) {
       }
 
       persistEngineState(module, result, nextHistory);
+
+      try {
+        const time_spent_seconds = Math.round((Date.now() - startTimeRef.current) / 1000);
+        track("psychometric_completed", {
+          module,
+          question_count: nextHistory.length,
+          time_spent_seconds,
+        });
+      } catch (analyticsError) {
+        console.warn("Analytics error for psychometric_completed:", analyticsError);
+      }
+
       setResultSummary(buildResultSummary(module, result));
       setCurrentQuestion(null);
       return;

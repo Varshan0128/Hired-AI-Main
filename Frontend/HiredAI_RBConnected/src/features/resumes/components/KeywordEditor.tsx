@@ -1,5 +1,7 @@
 import imgImage29 from "../assets/ed3a390e622d86ef712709ecc96909a91e5a9560.png";
 import FormSidebar from "./FormSidebar";
+import { useRef } from "react";
+import { track } from "../../../utils/analytics";
 import svgPaths from "../imports/svg-qru9qbdxdq";
 
 interface KeywordEditorProps {
@@ -10,6 +12,22 @@ interface KeywordEditorProps {
 }
 
 export function KeywordEditor({ selectedRole, selectedKeywords, onSaveChanges, onBack }: KeywordEditorProps) {
+  const startTimeRef = useRef(Date.now());
+
+  const handleSaveChanges = () => {
+    const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+    try {
+      track("resume_builder_step_completed", {
+        step: "keyword_editor",
+        time_spent_seconds: elapsed,
+        template_chosen: null,
+      });
+    } catch (e) {
+      console.warn("Analytics error for keyword_editor step completed:", e);
+    }
+    onSaveChanges?.();
+  };
+
   return (
     <div className="min-h-screen bg-white px-4 sm:px-6 lg:px-10 py-6 lg:py-12">
       <div className="max-w-[1728px] mx-auto">
@@ -87,7 +105,7 @@ export function KeywordEditor({ selectedRole, selectedKeywords, onSaveChanges, o
           
           {/* Save Changes button */}
           <button 
-            onClick={onSaveChanges}
+            onClick={handleSaveChanges}
             className="bg-black text-white rounded-lg px-6 py-2.5 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors min-w-[220px]"
           >
             <span className="font-['Poppins:Medium',sans-serif] text-[20px] leading-normal">

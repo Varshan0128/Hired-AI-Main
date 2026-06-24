@@ -14,6 +14,7 @@ import professional3 from "../Resumes/1professional3.html?raw";
 import { TemplateCard } from "./TemplateCard";
 import { renderTemplateHtml } from "./HtmlTemplate";
 import PageBackButton from "../../../components/PageBackButton";
+import { track } from "../../../utils/analytics";
 import {
   EMPTY_TEMPLATE_EDITOR_FORM_DATA,
   TEMPLATE_EDITOR_PLACEHOLDERS,
@@ -56,6 +57,7 @@ export function TemplateSelection({
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
   const [previewScale, setPreviewScale] = useState(1);
   const previewViewportRef = useRef<HTMLDivElement | null>(null);
+  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -95,11 +97,25 @@ export function TemplateSelection({
     setPreviewTemplate(null);
   };
 
+  const handleContinue = (templateId: string) => {
+    const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+    try {
+      track("resume_builder_step_completed", {
+        step: "template_selection",
+        time_spent_seconds: elapsed,
+        template_chosen: templateId,
+      });
+    } catch (e) {
+      console.warn("Analytics error for template selection step completed:", e);
+    }
+    onContinue?.(templateId);
+  };
+
   const handleSelectTemplate = () => {
     if (!previewTemplateConfig) return;
     setPendingTemplate(previewTemplateConfig.id);
     setPreviewTemplate(null);
-    onContinue?.(previewTemplateConfig.id);
+    handleContinue(previewTemplateConfig.id);
   };
 
   useEffect(() => {
@@ -296,7 +312,7 @@ export function TemplateSelection({
               <p className="text-lg font-semibold text-black">{selectedTemplateConfig.name}</p>
             </div>
             <button
-              onClick={() => onContinue?.(pendingTemplate)}
+              onClick={() => handleContinue(pendingTemplate)}
               className="inline-flex items-center justify-center rounded-full border border-[#111827] bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#f3f4f6]"
             >
               Continue to Editor

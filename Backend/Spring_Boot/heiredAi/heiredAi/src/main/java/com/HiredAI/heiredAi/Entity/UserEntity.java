@@ -28,6 +28,10 @@ public class UserEntity {
     private String lastName;   
     private String mobile; 
     
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime lastLoginAt;
+    private String acquisitionSource;
+    
     private String otp;
     private long otpExpiry; 
     @Column(nullable = false, columnDefinition = "boolean default false")
@@ -122,6 +126,27 @@ public class UserEntity {
 		// TODO Auto-generated constructor stub
 	}
 	
+	public java.time.LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+	public void setCreatedAt(java.time.LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+	public java.time.LocalDateTime getLastLoginAt() {
+		return lastLoginAt;
+	}
+	public void setLastLoginAt(java.time.LocalDateTime lastLoginAt) {
+		this.lastLoginAt = lastLoginAt;
+	}
+	public String getAcquisitionSource() {
+		return acquisitionSource;
+	}
+	public void setAcquisitionSource(String acquisitionSource) {
+		this.acquisitionSource = acquisitionSource;
+	}
 	
-	
+	@jakarta.persistence.PrePersist
+	protected void onCreate() {
+		this.createdAt = java.time.LocalDateTime.now();
+	}
 }

@@ -606,6 +606,14 @@ export default function SignIn({ onNavigate }: { onNavigate: (page: string) => v
         const message = data || "Registration successful.";
         alert(message);
 
+        try {
+          if (typeof window !== "undefined" && (window as any).hiredai_track) {
+            (window as any).hiredai_track("signup_succeeded");
+          }
+        } catch (err) {
+          console.warn("Analytics error during signup:", err);
+        }
+
         if (message.toLowerCase().includes("log in now")) {
           onNavigate("login");
           return;

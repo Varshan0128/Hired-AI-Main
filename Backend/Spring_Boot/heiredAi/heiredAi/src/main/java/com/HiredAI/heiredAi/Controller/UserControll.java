@@ -51,7 +51,7 @@ public class UserControll {
     @PostMapping("/register")
     public String userRegister(@RequestBody UserEntity user) {
         return userService.Register(user.getEmail(), user.getPassword(), user.getFirstName(), user.getLastName(),
-                user.getMobile());
+                user.getMobile(), user.getAcquisitionSource());
     }
 
     @PostMapping("/login")
